@@ -11,16 +11,16 @@ NautilusScriptHub is a collection of useful scripts for Nautilus, the file manag
 
 ### Installation
 1. Clone the repository:
-    ```
+    ```bash
     git clone https://github.com/yourusername/NautilusScriptHub.git
-    ```
-    
+
 2. Copy the scripts to your Nautilus scripts directory:
 
+    ```bash
     cp NautilusScriptHub/* ~/.local/share/nautilus/scripts/
 
 3. Give execute permissions to the scripts:
-
+    ```bash
     chmod +x ~/.local/share/nautilus/scripts/*
 
 ### Usage
