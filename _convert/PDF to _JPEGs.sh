@@ -26,7 +26,8 @@ for input_pdf in "$@"; do
   # -density sets the DPI (for quality)
   # -quality sets the compression quality (max is 100)
   # Adjusted the numbering to start from 1 instead of 0
-  convert -density 300 "$input_pdf" -quality 100 "${base_name}_%04d.jpg"
+  convert -strip -colorspace sRGB -density 300 "$input_pdf" -quality 100 "${base_name}_%04d.jpg"
+  #convert -strip -colorspace sRGB "$input_pdf" "${base_name}_%04d.jpg"
 
   echo "PDF '$input_pdf' converted to high-quality JPEGs in the current directory."
 done

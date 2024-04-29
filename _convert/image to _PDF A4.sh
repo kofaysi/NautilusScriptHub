@@ -12,9 +12,21 @@ if ! command -v convert &> /dev/null; then
   exit 1
 fi
 
-# Define the A4 page dimensions in pixels with 300dpi density
-page_width=2480  # 8.27 inches * 300 dpi
-page_height=3508 # 11.69 inches * 300 dpi
+# Get image dimensions
+dimensions=$(identify -format "%wx%h" "$input_image")
+width=$(echo $dimensions | cut -d'x' -f1)
+height=$(echo $dimensions | cut -d'x' -f2)
+
+# Decide on page orientation based on image dimensions
+if (( width > height )); then
+# Use landscape orientation
+page_width=3508
+page_height=2480
+else
+# Use portrait orientation
+page_width=248
+page_height=3508
+fi
 
 for input_image in "$@"; do
   # Check if the input file exists
@@ -26,7 +38,7 @@ for input_image in "$@"; do
   output_pdf="${input_image%.*}.pdf"
 
   # Use convert to auto-fit the image to the PDF size and set print quality
-  convert "$input_image" -resize "${page_width}x${page_height}" -density 300x300 -units pixelsperinch "$output_pdf"
+  convert "$input_image" -resize "${page_width}x${page_height}" -gravity center -background white -extent "${page_width}x${page_height}" -density 300x300 -units pixelsperinch "$output_pdf"
 
   echo "Image '$input_image' converted to PDF with A4 format (300dpi), auto-fit, and print quality: $output_pdf"
 done
