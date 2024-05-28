@@ -10,11 +10,6 @@ if [ -z "$DISPLAY" ]; then
     export DISPLAY=:0
 fi
 
-# Debugging information
-echo "Running script as user: $(whoami)"
-echo "Current directory: $(pwd)"
-echo "Display environment: $DISPLAY"
-
 # Initialize variables
 COMMIT_MESSAGE=""
 
