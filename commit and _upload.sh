@@ -5,6 +5,36 @@ function get_commit_message() {
     zenity --entry --title="Commit Message" --text="Enter the commit message:"
 }
 
+# Ensure DISPLAY is set, if not, set it to :0
+if [ -z "$DISPLAY" ]; then
+    export DISPLAY=:0
+fi
+
+# Debugging information
+echo "Running script as user: $(whoami)"
+echo "Current directory: $(pwd)"
+echo "Display environment: $DISPLAY"
+
+# Initialize variables
+COMMIT_MESSAGE=""
+
+# Parse arguments
+while getopts ":m:" opt; do
+  case $opt in
+    m)
+      COMMIT_MESSAGE="$OPTARG"
+      ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
 # Pull the latest changes from the remote repository
 if git pull origin main; then
     echo "Successfully pulled from remote repository."
@@ -20,14 +50,12 @@ if git diff-index --quiet HEAD -- && git diff --staged --quiet && [ -z "$(git ls
 fi
 
 # If no commit message is provided, use zenity to get one
-if [ -z "$1" ]; then
+if [ -z "$COMMIT_MESSAGE" ]; then
     COMMIT_MESSAGE=$(get_commit_message)
     if [ -z "$COMMIT_MESSAGE" ]; then
         zenity --error --text="Commit aborted: No commit message provided."
         exit 1
     fi
-else
-    COMMIT_MESSAGE="$1"
 fi
 
 # Add all modified files to the staging area
