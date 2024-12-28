@@ -6,8 +6,16 @@ if [ "$#" -lt 2 ]; then
     exit 1
 fi
 
-# Output file name
-output_file="merged.pdf"
+# Base output file name
+base_output_file="merged"
+output_file="${base_output_file}.pdf"
+counter=1
+
+# Increment filename if the output file already exists
+while [ -e "$output_file" ]; do
+    printf -v output_file "%s%03d.pdf" "$base_output_file" "$counter"
+    ((counter++))
+done
 
 # Merge the PDF files using Ghostscript
 gs -dBATCH -dNOPAUSE -q -sDEVICE=pdfwrite -sOutputFile="$output_file" "$@"
