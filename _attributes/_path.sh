@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Date: 2023-11-23
+# Author: https://github.com/kofaysi
+# Description: This script takes a file or directory path as an argument, resolves it to its absolute path, and copies the result to the clipboard.
+
 # Check if argument is empty
 if [ -z "$1" ]
 then

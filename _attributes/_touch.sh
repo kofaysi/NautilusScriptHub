@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Date: 2024-10-15
+# Author: https://github.com/kofaysi
+# Description: This script updates the last modified timestamp of selected files in Nautilus to the current time.
+
 # Loop through each selected file in Nautilus
 for file in "$@"; do
     # Update the last modified date to the current time

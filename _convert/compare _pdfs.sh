@@ -1,6 +1,8 @@
 #!/bin/bash
 
-# Bash script to compare two PDFs page by page and highlight differences using subtraction in ImageMagick
+# Date: 2024-04-29
+# Author: https://github.com/kofaysi
+# Description: Bash script to compare two PDFs page by page and highlight differences using subtraction in ImageMagick
 
 # Check for correct number of arguments
 if [ "$#" -ne 2 ]; then
