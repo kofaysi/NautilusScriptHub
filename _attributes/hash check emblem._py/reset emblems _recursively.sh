@@ -9,7 +9,7 @@
 export GDK_BACKEND=x11
 
 # Path to the reset_emblems.sh script
-RESET_EMBLEMS_SCRIPT="$HOME/.local/share/nautilus/scripts/_attributes/reset _emblems.sh"
+RESET_EMBLEMS_SCRIPT="$HOME/.local/share/nautilus/scripts/_attributes/hash check emblem._py/reset _emblems.sh"
 
 # Check if the script exists
 if [[ ! -f "$RESET_EMBLEMS_SCRIPT" ]]; then
