@@ -57,7 +57,9 @@ if [[ -z "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS" ]]; then
     exit 1
 fi
 
+# Initialize an empty string for files with attributes
 FILES_WITH_XATTR=""
+
 while IFS= read -r path; do
     if [[ -f "$path" ]]; then
         # Process files directly
@@ -66,7 +68,9 @@ while IFS= read -r path; do
         fi
     elif [[ -d "$path" && "$RECURSIVE" == true ]]; then
         # Process files within directories if recursive flag is set
-        FILES_WITH_XATTR+=$(find_files_with_xattr "$path" true)
+        while IFS= read -r file; do
+            FILES_WITH_XATTR+="$file\n"
+        done < <(find_files_with_xattr "$path" true)
     fi
 done <<< "$NAUTILUS_SCRIPT_SELECTED_FILE_PATHS"
 
