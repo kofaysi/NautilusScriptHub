@@ -10,8 +10,7 @@
 check_input_count() {
     local expected_count=$1
     local comparison=${2:-"-eq"}
-    shift
-    shift
+    shift 2
     local actual_count=$#
     
     if ! [ "$actual_count" $comparison "$expected_count" ]; then
