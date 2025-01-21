@@ -9,8 +9,8 @@
 # Function to check the number of input arguments
 check_input_count() {
     local expected_count=$1
-    shift
     local comparison=${2:-"-eq"}
+    shift
     shift
     local actual_count=$#
     
