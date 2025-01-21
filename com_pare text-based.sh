@@ -9,9 +9,11 @@
 # Function to check the number of input arguments
 check_input_count() {
     local expected_count=$1
-    local actual_count=$#
+    shift
     local comparison=${2:-"-eq"}
-
+    shift
+    local actual_count=$#
+    
     if ! [ "$actual_count" $comparison "$expected_count" ]; then
         zenity --error --text="Expected $comparison $expected_count arguments, but got $actual_count. Please provide the correct number of inputs."
         exit 1
