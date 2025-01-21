@@ -10,15 +10,16 @@
 check_input_count() {
     local expected_count=$1
     local actual_count=$#
+    local comparison=${2:-"-eq"}
 
-    if [ "$actual_count" -ne "$expected_count" ]; then
-        zenity --error --text="Expected $expected_count arguments, but got $actual_count. Please provide the correct number of inputs."
+    if ! [ "$actual_count" $comparison "$expected_count" ]; then
+        zenity --error --text="Expected $comparison $expected_count arguments, but got $actual_count. Please provide the correct number of inputs."
         exit 1
     fi
 }
 
-# Call the function to check input count, expecting 2 arguments
-check_input_count 2 "$@"
+# Call the function to check input count, expecting exactly 2 arguments
+check_input_count 2 -eq "$@"
 
 # Assign the file paths to variables
 FILE1="$1"
