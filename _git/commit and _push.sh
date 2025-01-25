@@ -13,6 +13,18 @@ function ensure_display() {
     fi
 }
 
+# Function to handle output
+output_error_message() {
+  local title="$1"
+  local text="$2"
+  if [[ -t 1 ]]; then
+    echo "$title: $text"
+  else
+    zenity --error --text="$text" --title="$title"
+  fi
+}
+
+
 # Function to parse arguments
 function parse_arguments() {
     while getopts ":m:" opt; do
@@ -40,8 +52,7 @@ function get_commit_message() {
         --form \
         --width=600 \
         --height=400 \
-        --field="Status for branch '$branch_name':":TXT "$status" \
-        --field="Commit Message:":TXT ""
+        --field="Commit Message (status prefilled):":TXT "$status"
 }
 
 # Function to check if a branch exists on remote and update it
@@ -49,7 +60,7 @@ function update_branch_from_remote() {
     local branch_name="$1"
     if git ls-remote --exit-code --heads origin "$branch_name"; then
         if ! git pull origin "$branch_name"; then
-            echo "Error pulling branch $branch_name. Please check conflicts or connectivity."
+            output_error_message "Error" "Error pulling branch $branch_name. Please check conflicts or connectivity."
             return 1
         fi
     else
@@ -76,7 +87,7 @@ function commit_changes_on_branch() {
     local status=$(git status --short | sed '/^$/d')
     local commit_message="${COMMIT_MESSAGE:-$(get_commit_message "$branch_name" "$status")}"
     if [ -z "$commit_message" ]; then
-        yad --error --text="Commit aborted: No commit message provided for branch $branch_name."
+        output_error_message "Error" "Commit aborted: No commit message provided for branch $branch_name."
         return 1
     fi
 
@@ -93,7 +104,7 @@ function commit_changes_on_branch() {
     if git push origin "$branch_name"; then
         echo "Changes pushed to remote repository for branch $branch_name."
     else
-        echo "Error pushing changes to remote repository for branch $branch_name."
+        output_error_message "Error" "Error pushing changes to remote repository for branch $branch_name."
         return 1
     fi
 
@@ -116,13 +127,8 @@ function process_all_branches() {
 }
 
 # Main script execution
-function main() {
-    ensure_display
-    parse_arguments "$@"
-    process_all_branches
-    echo "All branches have been processed."
-}
-
-# Execute the main function
-main "$@"
+ensure_display
+parse_arguments "$@"
+process_all_branches
+output_error_message "Info" "All branches have been processed."
 
