@@ -4,20 +4,16 @@
 # Author: https://github.com/kofaysi/
 # Description: This script checks the number of input arguments and compares two files using kdiff3 if the correct number of arguments is provided.
 # Changelog:
-#   - [2025-01-22]: Add function for input count check
+# - [2025-01-22]: Add function for input count check
+# - [2025-01-25]: Import common functions from script_utils.sh
 
-# Function to check the number of input arguments
-check_input_count() {
-    local expected_count=$1
-    local comparison=${2:-"-eq"}
-    shift 2
-    local actual_count=$#
-    
-    if ! [ "$actual_count" $comparison "$expected_count" ]; then
-        zenity --error --text="Expected $comparison $expected_count arguments, but got $actual_count. Please provide the correct number of inputs."
-        exit 1
-    fi
-}
+# import common script functions
+if [ -f ~/.local/share/nautilus/scripts/script_utils.sh ]; then
+    source ~/.local/share/nautilus/scripts/script_utils.sh
+else
+    echo "Error: script_utils.sh not found. Exiting."
+    exit 1
+fi
 
 # Call the function to check input count, expecting exactly 2 arguments
 check_input_count 2 -eq "$@"

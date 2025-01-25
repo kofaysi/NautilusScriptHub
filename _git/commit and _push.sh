@@ -4,7 +4,9 @@
 # Author: https://github.com/kofaysi/
 # Description: # This script automates the process of committing and pushing changes across multiple Git branches. It allows for dynamic commit messages via Yad and handles branch synchronization with the remote repository.
 # Changelog:
-# - 2025-01-25: Refactored into modular functions for better maintainability.
+# - [2025-01-25]: Refactored into modular functions for better maintainability.
+# 	- Import script_utils.sh for common functions.
+# 	- Ouput Error messages to GUI ouput as well. 
 
 # Function to ensure DISPLAY is set
 function ensure_display() {
@@ -13,36 +15,13 @@ function ensure_display() {
     fi
 }
 
-# Function to handle output
-output_error_message() {
-  local title="$1"
-  local text="$2"
-  if [[ -t 1 ]]; then
-    echo "$title: $text"
-  else
-  	case "$title" in
-			*error*|*Error*|*ERROR*)
-			  dialog_type="--error"
-			  ;;
-			*info*|*Info*|*INFO*)
-			  dialog_type="--info"
-			  ;;
-			*notification*|*Notification*|*NOTIFICATION*)
-			  dialog_type="--notification"
-			  ;;
-			*warning*|*Warning*|*WARNING*)
-			  dialog_type="--warning"
-			  ;;
-			*)
-			  dialog_type="--info" # Default to info dialog
-		  ;;
-		esac
-
-		# Display the yad dialog
-    zenity $dialog_type --text="$text" --title="$title"
-  fi
-}
-
+# import common script functions
+if [ -f ~/.local/share/nautilus/scripts/script_utils.sh ]; then
+    source ~/.local/share/nautilus/scripts/script_utils.sh
+else
+    echo "Error: script_utils.sh not found. Exiting."
+    exit 1
+fi
 
 # Function to parse arguments
 function parse_arguments() {
@@ -79,7 +58,7 @@ function update_branch_from_remote() {
     local branch_name="$1"
     if git ls-remote --exit-code --heads origin "$branch_name"; then
         if ! git pull origin "$branch_name"; then
-            output_error_message "Error" "Error pulling branch $branch_name. Please check conflicts or connectivity."
+            output_message "Error" "Error pulling branch $branch_name. Please check conflicts or connectivity."
             return 1
         fi
     else
@@ -106,7 +85,7 @@ function commit_changes_on_branch() {
     local status=$(git status --short | sed '/^$/d')
     local commit_message="${COMMIT_MESSAGE:-$(get_commit_message "$branch_name" "$status")}"
     if [ -z "$commit_message" ]; then
-        output_error_message "Error" "Commit aborted: No commit message provided for branch $branch_name."
+        output_message "Error" "Commit aborted: No commit message provided for branch $branch_name."
         return 1
     fi
 
@@ -123,7 +102,7 @@ function commit_changes_on_branch() {
     if git push origin "$branch_name"; then
         echo "Changes pushed to remote repository for branch $branch_name."
     else
-        output_error_message "Error" "Error pushing changes to remote repository for branch $branch_name."
+        output_message "Error" "Error pushing changes to remote repository for branch $branch_name."
         return 1
     fi
 
@@ -149,5 +128,5 @@ function process_all_branches() {
 ensure_display
 parse_arguments "$@"
 process_all_branches
-output_error_message "Info" "All branches have been processed."
+output_message "Info" "All branches have been processed."
 
