@@ -20,7 +20,26 @@ output_error_message() {
   if [[ -t 1 ]]; then
     echo "$title: $text"
   else
-    zenity --error --text="$text" --title="$title"
+  	case "$title" in
+			*error*|*Error*|*ERROR*)
+			  dialog_type="--error"
+			  ;;
+			*info*|*Info*|*INFO*)
+			  dialog_type="--info"
+			  ;;
+			*notification*|*Notification*|*NOTIFICATION*)
+			  dialog_type="--notification"
+			  ;;
+			*warning*|*Warning*|*WARNING*)
+			  dialog_type="--warning"
+			  ;;
+			*)
+			  dialog_type="--info" # Default to info dialog
+		  ;;
+		esac
+
+		# Display the yad dialog
+    zenity $dialog_type --text="$text" --title="$title"
   fi
 }
 
