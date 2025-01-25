@@ -57,4 +57,3 @@ Milan Berta - milan.berta@e.email
 
 ### Acknowledgments
 
-List any other contributors or sources that you would like to acknowledge.

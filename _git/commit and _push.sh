@@ -40,7 +40,7 @@ function get_commit_message() {
         --form \
         --width=600 \
         --height=400 \
-        --field="Status for branch '$branch_name':":LBL "$status" \
+        --field="Status for branch '$branch_name':":TXT "$status" \
         --field="Commit Message:":TXT ""
 }
 
