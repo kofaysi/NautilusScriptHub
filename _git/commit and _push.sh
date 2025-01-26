@@ -50,7 +50,9 @@ function get_commit_message() {
         --form \
         --width=600 \
         --height=400 \
-        --field="Commit Message (status prefilled):":TXT "$status"
+        --field="Commit Message (status prefilled.
+Multiline message is split into multi -m messages).
+For better commit messages visit https://www.conventionalcommits.org/":TXT "$status"
 }
 
 # Function to check if a branch exists on remote and update it
@@ -91,7 +93,8 @@ function commit_changes_on_branch() {
 
     # Stage and commit changes
     git add .
-    if git commit -m "$commit_message"; then
+    # The commit message contains a vertical bar at the end, trim it. The commit messagem ay contain \n as newline separators, chop the message to multiple -m messages
+    if git commit -m "$(echo -e "$commit_message" | sed 's/|$//; s/\n/\" -m \"/g')"; then
         echo "Changes committed for branch $branch_name."
     else
         echo "No changes to commit after staging for branch $branch_name."
