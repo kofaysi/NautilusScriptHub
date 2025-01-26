@@ -93,7 +93,7 @@ function commit_changes_on_branch() {
 
     # Stage and commit changes
     git add .
-    # The commit message contains a vertical bar at the end, trim it. The commit messagem ay contain \n as newline separators, chop the message to multiple -m messages
+    # The commit message contains a vertical bar at the end, trim it. The commit messagem may contain \n as newline separators, chop the message to multiple -m messages
     if git commit -m "$(echo -e "$commit_message" | sed 's/|$//; s/\n/\" -m \"/g')"; then
         echo "Changes committed for branch $branch_name."
     else
