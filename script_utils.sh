@@ -49,3 +49,35 @@ check_input_count() {
     fi
 }
 
+#!/bin/bash
+
+# Function to check if an item exists
+check_item_existence() {
+    local item="$1"
+    if [[ -e "$item" ]]; then
+        return 0  # Item exists
+    else
+        echo "File or directory not found: $item"
+        return 1  # Item does not exist
+    fi
+}
+
+# Function to extract creation timestamp and format it
+get_formatted_timestamp() {
+    local item="$1"
+    local timestamp=$(stat -c %y "$item")
+    echo $(date -d "$timestamp" +"%Y-%m-%d %H%M")
+}
+
+# Function to get the current date and time
+get_current_datetime() {
+    echo $(date +"%Y-%m-%d %H%M")
+}
+
+# Function to rename an item (file or directory)
+rename_item() {
+    local old_name="$1"
+    local new_name="$2"
+    mv "$old_name" "$new_name"
+    echo "Renamed: $old_name -> $new_name"
+}
