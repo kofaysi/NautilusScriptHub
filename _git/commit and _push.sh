@@ -52,7 +52,7 @@ function get_commit_message() {
 		        --text="Status for branch '$branch_name':\n\n$status\n\nEnter a commit message for branch '':" \
 		        --add-entry="Summary" \
 		        --add-text-info="Description" \
-		        --width=300 --height=600
+		        --width=600 --height=600
 
 ### yad
 #    yad --title="Commit Message" \
