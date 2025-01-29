@@ -46,13 +46,22 @@ function parse_arguments() {
 function get_commit_message() {
     local branch_name="$1"
     local status="$2"
-    yad --title="Commit Message" \
-        --form \
-        --width=600 \
-        --height=400 \
-        --field="Commit Message (status prefilled.
-Multiline message is split into multi -m messages).
-For better commit messages visit https://www.conventionalcommits.org/":TXT "$status"
+### zenity
+		zenity  --forms \
+		        --title="Commit Message" \
+		        --text="Status for branch '$branch_name':\n\n$status\n\nEnter a commit message for branch '':" \
+		        --add-entry="Summary" \
+		        --add-text-info="Description" \
+		        --width=300 --height=600
+
+### yad
+#    yad --title="Commit Message" \
+#        --form \
+#        --width=600 \
+#        --height=400 \
+#        --field="Commit Message (status prefilled.
+#Multiline message is split into multi -m messages).
+#For better commit messages visit https://www.conventionalcommits.org/":TXT "$status"
 }
 
 # Function to check if a branch exists on remote and update it
@@ -90,11 +99,15 @@ function commit_changes_on_branch() {
         output_message "Error" "Commit aborted: No commit message provided for branch $branch_name."
         return 1
     fi
+    
+    summary=$(echo "$commit_message" | head -1 | cut -d'|' -f1)
+		description=$(echo "$commit_message" | cut -d'|' -f2-)
 
     # Stage and commit changes
     git add .
     # The commit message contains a vertical bar at the end, trim it. The commit messagem may contain \n as newline separators, chop the message to multiple -m messages
-    if git commit -m "$(echo -e "$commit_message" | sed 's/|$//; s/\n/\" -m \"/g')"; then
+    #if git commit -m "$(echo -e "$commit_message" | sed 's/|$//; s/\n/\" -m \"/g')"; then # for yad
+    if git commit -m "$summary" -m "$(echo -e "$description" | sed 's/\n/\" -m \"/g')"; then # for zenity
         echo "Changes committed for branch $branch_name."
     else
         echo "No changes to commit after staging for branch $branch_name."
