@@ -73,12 +73,12 @@ if [[ -z "$REMAINING_USERS" ]]; then
         echo "Removing shared user, home directory, and group."
         sudo userdel "$SHARED_ACCOUNT"
         sudo rm -rf "/home/$SHARED_ACCOUNT"
-				if getent group "$SHARED_ACCOUNT" >/dev/null; then
-						echo "Removing group: $SHARED_ACCOUNT"
-						sudo groupdel "$SHARED_ACCOUNT"
-				else
-						echo "Group $SHARED_ACCOUNT does not exist, skipping removal."
-				fi
+        if getent group "$SHARED_ACCOUNT" >/dev/null; then
+            echo "Removing group: $SHARED_ACCOUNT"
+            sudo groupdel "$SHARED_ACCOUNT"
+        else
+            echo "Group $SHARED_ACCOUNT does not exist, skipping removal."
+        fi
         zenity --info --title="Cleanup Complete" --text="Shared account and its home have been removed."
     fi
 fi
