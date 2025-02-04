@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Date: 2025-02-04
+# Author: https://github.com/kofaysi
+# Description: This script manages the shared account and the users assigned to the shared group interactively.   
+# inspiration https://forum.zorin.com/t/how-to-transfer-files-from-one-user-to-another/
+
 # Identify shared account by finding home directories with setgid bit (+s) set
 echo "Searching for shared accounts with setgid bit set..."
 SHARED_ACCOUNTS=$(sudo find /home -maxdepth 1 -type d -perm -2000 -exec basename {} \;)
