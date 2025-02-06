@@ -150,18 +150,18 @@ function commit_changes_on_branch() {
     # Ensure the branch has a tracking remote branch
     ensure_branch_tracking "$branch_name"
 
+    # Pull latest changes BEFORE popping the stash (using rebase strategy)
+    echo "### DEBUG: Pulling latest changes for branch: $branch_name"
+    if ! git pull --rebase; then
+        zenity --error --text="Error pulling branch $branch_name. Please check conflicts or connectivity."
+        return 1
+    fi
+    
     # Pop stash only if it belongs to this branch
     pop_stash_if_exists "$branch_name"
 
     # Show updated status
     git status
-
-    # Pull latest changes (default merge)
-    echo "### DEBUG: Pulling latest changes for branch: $branch_name"
-    if ! git pull; then
-        zenity --error --text="Error pulling branch $branch_name. Please check conflicts or connectivity."
-        return 1
-    fi
 
     # Get the list of modified files and their statuses
     local modified_files=$(git status --short | grep -v '^??')
