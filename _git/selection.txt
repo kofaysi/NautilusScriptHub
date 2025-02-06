@@ -1,2 +1,3 @@
+git helper in Joplin.sh
+commit and _push.sh
 git file _created date.sh
-script.sh
