@@ -69,7 +69,7 @@ function update_branch_from_remote() {
     local branch_name="$1"
     if git ls-remote --exit-code --heads origin "$branch_name"; then
         if ! git pull origin "$branch_name"; then
-            output_message "Error" "Error pulling branch $branch_name. Please check conflicts or connectivity."
+            output_message "Error" "Error pulling branch '$branch_name'. Please check conflicts or connectivity."
             return 1
         fi
     else
@@ -84,7 +84,7 @@ function update_branch_from_remote() {
 function stash_changes_if_needed() {
     local branch_name="$1"
     if ! git diff-index --quiet HEAD --; then
-        echo "### DEBUG: Stashing local changes for branch: $branch_name"
+        echo "### DEBUG: Stashing local changes for branch '$branch_name'"
         git stash push -m "stash-$branch_name"
     fi
 }
@@ -93,10 +93,10 @@ function stash_changes_if_needed() {
 function pop_stash_if_exists() {
     local branch_name="$1"
     if git stash list | grep -q "stash-$branch_name"; then
-        echo "### DEBUG: Popping stash for branch: $branch_name"
+        echo "### DEBUG: Popping stash for branch '$branch_name'"
         git stash pop "$(git stash list | grep "stash-$branch_name" | head -n1 | awk -F: '{print $1}')"
     else
-        echo "### DEBUG: No stash to pop for branch: $branch_name"
+        echo "### DEBUG: No stash to pop for branch '$branch_name'"
     fi
 }
 
@@ -104,10 +104,10 @@ function pop_stash_if_exists() {
 function switch_to_branch() {
     local branch_name="$1"
     if git checkout "$branch_name"; then
-        echo "### DEBUG: Switched to branch: $branch_name"
+        echo "### DEBUG: Switched to branch '$branch_name'"
         return 0
     else
-        zenity --error --text="Error: Could not switch to branch $branch_name."
+        zenity --error --text="Error: Could not switch to branch '$branch_name'."
         return 1
     fi
 }
@@ -118,18 +118,18 @@ function ensure_branch_tracking() {
 
     # Check if the branch has an upstream
     if ! git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
-        echo "### DEBUG: No upstream set for $branch_name. Setting upstream..."
+        echo "### DEBUG: No upstream set for branch '$branch_name'. Setting upstream..."
 
         # Ensure remote branch exists before setting upstream
         if git ls-remote --exit-code --heads origin "$branch_name" >/dev/null 2>&1; then
             git branch --set-upstream-to=origin/"$branch_name" "$branch_name"
-            echo "### DEBUG: Upstream set for branch: $branch_name"
+            echo "### DEBUG: Upstream set for branch '$branch_name'"
         else
-            echo "### DEBUG: Remote branch origin/$branch_name does not exist. Creating it..."
+            echo "### DEBUG: Remote branch 'origin/$branch_name' does not exist. Creating it..."
             git push --set-upstream origin "$branch_name"
         fi
     else
-        echo "### DEBUG: Upstream already exists for $branch_name"
+        echo "### DEBUG: Upstream already exists for branch '$branch_name'"
     fi
 }
 
@@ -151,9 +151,9 @@ function commit_changes_on_branch() {
     ensure_branch_tracking "$branch_name"
 
     # Pull latest changes BEFORE popping the stash (using rebase strategy)
-    echo "### DEBUG: Pulling latest changes for branch: $branch_name"
+    echo "### DEBUG: Pulling latest changes for branch '$branch_name'"
     if ! git pull --rebase; then
-        zenity --error --text="Error pulling branch $branch_name. Please check conflicts or connectivity."
+        zenity --error --text="Error pulling branch '$branch_name'. Please check conflicts or connectivity."
         return 1
     fi
     
@@ -168,8 +168,8 @@ function commit_changes_on_branch() {
 
     # If no files are modified, exit early
     if [ -z "$modified_files" ]; then
-        echo "### DEBUG: No modified files found for branch: $branch_name"
-        zenity --info --text="No changes to commit for branch $branch_name."
+        echo "### DEBUG: No modified files found for branch '$branch_name'"
+        zenity --info --text="No changes to commit for branch '$branch_name'."
         return 0
     fi
 
@@ -185,7 +185,7 @@ function commit_changes_on_branch() {
     # Show Zenity checklist for file selection
     SELECTED_FILES=$(zenity --list \
         --title="Select Files to Commit" \
-        --text="Select files to stage for commit (branch: $branch_name):" \
+        --text="Select files to stage for commit (branch '$branch_name'):" \
         --checklist \
         --column="Select" --column="Filename" --column="Status" \
         "${FILE_LIST[@]}" \
@@ -229,7 +229,7 @@ function commit_changes_on_branch() {
     # Commit changes
     echo "### DEBUG: Committing changes..."
     if git commit -m "$summary" -m "$(echo -e "$description" | sed 's/\n/\" -m \"/g')"; then
-        echo "Changes committed for branch $branch_name."
+        echo "Changes committed for branch '$branch_name'."
     else
         zenity --error --text="No changes to commit after staging."
         return 1
@@ -238,16 +238,16 @@ function commit_changes_on_branch() {
     # Push changes
     echo "### DEBUG: Pushing changes..."
     if git push origin "$branch_name"; then
-        echo "Changes pushed to remote repository for branch $branch_name."
+        echo "Changes pushed to remote repository for branch '$branch_name'."
     else
-        zenity --error --text="Error pushing changes for branch $branch_name."
+        zenity --error --text="Error pushing changes for branch '$branch_name'."
         return 1
     fi
 
     # Stash any new changes before switching back
     stash_changes_if_needed "$branch_name"
 
-    echo "### DEBUG: Finished processing branch: $branch_name"
+    echo "### DEBUG: Finished processing branch '$branch_name'"
     return 0
 }
 
