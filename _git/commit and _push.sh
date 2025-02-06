@@ -107,7 +107,7 @@ function switch_to_branch() {
         echo "### DEBUG: Switched to branch '$branch_name'"
         return 0
     else
-        zenity --error --text="Error: Could not switch to branch '$branch_name'."
+        output_message "Error" "Error: Could not switch to branch '$branch_name'."
         return 1
     fi
 }
@@ -153,7 +153,7 @@ function commit_changes_on_branch() {
     # Pull latest changes BEFORE popping the stash (using rebase strategy)
     echo "### DEBUG: Pulling latest changes for branch '$branch_name'"
     if ! git pull --rebase; then
-        zenity --error --text="Error pulling branch '$branch_name'. Please check conflicts or connectivity."
+        output_message "Error" "Error pulling branch '$branch_name'. Please check conflicts or connectivity."
         return 1
     fi
     
@@ -169,7 +169,7 @@ function commit_changes_on_branch() {
     # If no files are modified, exit early
     if [ -z "$modified_files" ]; then
         echo "### DEBUG: No modified files found for branch '$branch_name'"
-        zenity --info --text="No changes to commit for branch '$branch_name'."
+        output_message "Info" "No changes to commit for branch '$branch_name'."
         return 0
     fi
 
@@ -195,7 +195,7 @@ function commit_changes_on_branch() {
 
     # Check if user canceled or selected nothing
     if [ -z "$SELECTED_FILES" ]; then
-        zenity --error --text="No files selected. Commit aborted."
+        output_message "Error" "No files selected. Commit aborted."
         echo "### DEBUG: No files selected, skipping commit."
         return 1
     fi
@@ -219,7 +219,7 @@ function commit_changes_on_branch() {
     local status=$(git status --short | sed '/^$/d')
     local commit_message="${COMMIT_MESSAGE:-$(get_commit_message "$branch_name" "$status")}"
     if [ -z "$commit_message" ]; then
-        zenity --error --text="Commit aborted: No commit message provided."
+        output_message "Error" "Commit aborted: No commit message provided."
         return 1
     fi
 
@@ -231,7 +231,7 @@ function commit_changes_on_branch() {
     if git commit -m "$summary" -m "$(echo -e "$description" | sed 's/\n/\" -m \"/g')"; then
         echo "Changes committed for branch '$branch_name'."
     else
-        zenity --error --text="No changes to commit after staging."
+        output_message "Error" "No changes to commit after staging."
         return 1
     fi
 
@@ -240,7 +240,7 @@ function commit_changes_on_branch() {
     if git push origin "$branch_name"; then
         echo "Changes pushed to remote repository for branch '$branch_name'."
     else
-        zenity --error --text="Error pushing changes for branch '$branch_name'."
+        output_message "Error" "Error pushing changes for branch '$branch_name'."
         return 1
     fi
 
