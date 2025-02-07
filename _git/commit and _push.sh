@@ -102,7 +102,7 @@ function commit_changes_on_branch() {
     pop_stash_if_exists "$branch_name"
 
     # Get a list of modified files (excluding untracked files)
-    local modified_files=$(git status --short | grep -v '^??')
+    local modified_files=$(git status --short)
 
     # Exit if there are no modified files
     if [ -z "$modified_files" ]; then
