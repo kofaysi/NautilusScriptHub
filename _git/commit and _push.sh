@@ -1,21 +1,22 @@
 #!/bin/bash
 
-# Script to commit and push changes accross multiple git branches.
+# Script to commit and push changes across multiple git branches.
 # Author: https://github.com/kofaysi/
-# Description: # This script automates the process of committing and pushing changes across multiple Git branches. It allows for dynamic commit messages via Yad and handles branch synchronization with the remote repository.
+# Description: This script automates the process of committing and pushing changes across multiple Git branches.
+# It allows for dynamic commit messages via Yad and handles branch synchronization with the remote repository.
 # Changelog:
 # - [2025-01-25]: Refactored into modular functions for better maintainability.
-# 	- Import script_utils.sh for common functions.
-# 	- Ouput Error messages to GUI ouput as well. 
+#   - Import script_utils.sh for common functions.
+#   - Output error messages to GUI output as well.
 
-# Function to ensure DISPLAY is set
+# Function to ensure DISPLAY is set (necessary for GUI tools like Zenity)
 function ensure_display() {
     if [ -z "$DISPLAY" ]; then
         export DISPLAY=:0
     fi
 }
 
-# import common script functions
+# Import common script functions if available
 if [ -f ~/.local/share/nautilus/scripts/script_utils.sh ]; then
     source ~/.local/share/nautilus/scripts/script_utils.sh
 else
@@ -23,7 +24,7 @@ else
     exit 1
 fi
 
-# Function to parse arguments
+# Function to parse script arguments
 function parse_arguments() {
     while getopts ":m:" opt; do
         case $opt in
@@ -64,27 +65,11 @@ function get_commit_message() {
 #For better commit messages visit https://www.conventionalcommits.org/":TXT "$status"
 }
 
-# Function to check if a branch exists on remote and update it
-function update_branch_from_remote() {
-    local branch_name="$1"
-    if git ls-remote --exit-code --heads origin "$branch_name"; then
-        if ! git pull origin "$branch_name"; then
-            output_message "Error" "Error pulling branch '$branch_name'. Please check conflicts or connectivity."
-            return 1
-        fi
-    else
-        echo "Branch $branch_name does not exist on remote. Creating it."
-        git push --set-upstream origin "$branch_name"
-    fi
-}
-
-#!/bin/bash
 
 # Function to stash changes if there are unstaged modifications
 function stash_changes_if_needed() {
     local branch_name="$1"
     if ! git diff-index --quiet HEAD --; then
-        echo "### DEBUG: Stashing local changes for branch '$branch_name'"
         git stash push -m "stash-$branch_name"
     fi
 }
@@ -93,21 +78,17 @@ function stash_changes_if_needed() {
 function pop_stash_if_exists() {
     local branch_name="$1"
     if git stash list | grep -q "stash-$branch_name"; then
-        echo "### DEBUG: Popping stash for branch '$branch_name'"
         git stash pop "$(git stash list | grep "stash-$branch_name" | head -n1 | awk -F: '{print $1}')"
-    else
-        echo "### DEBUG: No stash to pop for branch '$branch_name'"
     fi
 }
 
-# Function to switch branches safely
+# Function to switch to a given branch
 function switch_to_branch() {
     local branch_name="$1"
     if git checkout "$branch_name"; then
-        echo "### DEBUG: Switched to branch '$branch_name'"
         return 0
     else
-        output_message "Error" "Error: Could not switch to branch '$branch_name'."
+        output_message "Error" "Could not switch to branch '$branch_name'."
         return 1
     fi
 }
@@ -118,28 +99,21 @@ function ensure_branch_tracking() {
 
     # Check if the branch has an upstream
     if ! git rev-parse --abbrev-ref --symbolic-full-name "@{u}" >/dev/null 2>&1; then
-        echo "### DEBUG: No upstream set for branch '$branch_name'. Setting upstream..."
-
-        # Ensure remote branch exists before setting upstream
+        # Set the upstream tracking branch if it exists remotely
         if git ls-remote --exit-code --heads origin "$branch_name" >/dev/null 2>&1; then
             git branch --set-upstream-to=origin/"$branch_name" "$branch_name"
-            echo "### DEBUG: Upstream set for branch '$branch_name'"
         else
-            echo "### DEBUG: Remote branch 'origin/$branch_name' does not exist. Creating it..."
+            # If the remote branch does not exist, create it
             git push --set-upstream origin "$branch_name"
         fi
-    else
-        echo "### DEBUG: Upstream already exists for branch '$branch_name'"
     fi
 }
 
-# Function to commit changes on a branch
+# Function to commit changes on a given branch
 function commit_changes_on_branch() {
     local branch_name="$1"
 
-    echo "### DEBUG: Processing branch: $branch_name"
-
-    # Stash local changes before switching
+    # Stash any local changes before switching branches
     stash_changes_if_needed "$(git rev-parse --abbrev-ref HEAD)"
 
     # Switch to the target branch
@@ -147,39 +121,33 @@ function commit_changes_on_branch() {
         return 1
     fi
 
-    # Ensure the branch has a tracking remote branch
+    # Ensure the branch has an upstream tracking remote branch
     ensure_branch_tracking "$branch_name"
 
-    # Pull latest changes BEFORE popping the stash (using rebase strategy)
-    echo "### DEBUG: Pulling latest changes for branch '$branch_name'"
+    # Pull latest changes BEFORE popping the stash (to prevent divergence issues)
     if ! git pull --rebase; then
         output_message "Error" "Error pulling branch '$branch_name'. Please check conflicts or connectivity."
         return 1
     fi
-    
-    # Pop stash only if it belongs to this branch
+
+    # Restore stashed changes for this branch if available
     pop_stash_if_exists "$branch_name"
 
-    # Show updated status
-    git status
-
-    # Get the list of modified files and their statuses
+    # Get a list of modified files (excluding untracked files)
     local modified_files=$(git status --short | grep -v '^??')
 
-    # If no files are modified, exit early
+    # Exit if there are no modified files
     if [ -z "$modified_files" ]; then
-        echo "### DEBUG: No modified files found for branch '$branch_name'"
         output_message "Info" "No changes to commit for branch '$branch_name'."
         return 0
     fi
 
-    # Prepare the file list for Zenity checklist (preselected by default)
+    # Prepare file list for Zenity checklist (preselecting all files)
     FILE_LIST=()
     while IFS= read -r line; do
         status=$(echo "$line" | awk '{print $1}')  # Extract status (e.g., M, A, D)
         file=$(echo "$line" | awk '{$1=""; print $0}' | sed 's/^ *//')  # Extract filename
-
-        FILE_LIST+=("TRUE" "$file" "$status")  # Preselect all files
+        FILE_LIST+=("TRUE" "$file" "$status")
     done <<< "$modified_files"
 
     # Show Zenity checklist for file selection
@@ -193,27 +161,19 @@ function commit_changes_on_branch() {
         --width=700 --height=500 \
         --multiple)
 
-    # Check if user canceled or selected nothing
+    # Exit if no files were selected
     if [ -z "$SELECTED_FILES" ]; then
         output_message "Error" "No files selected. Commit aborted."
-        echo "### DEBUG: No files selected, skipping commit."
         return 1
     fi
 
-    # Stage only the selected files (Handling spaces properly)
-    echo "### DEBUG: Staging selected files..."
+    # Stage only the selected files (handling filenames with spaces correctly)
     echo "$SELECTED_FILES" | tr '|' '\n' | while IFS= read -r file; do
-        # Remove extra quotes from filenames
         clean_file=$(echo "$file" | sed 's/^"\(.*\)"$/\1/')
-
         if [ -n "$clean_file" ]; then
-            git add -- "$clean_file"  # Use -- to handle filenames safely
-            echo "### DEBUG: Added file: '$clean_file'"
-        else
-            echo "### DEBUG: Skipped empty filename."
+            git add -- "$clean_file"
         fi
     done
-
 
     # Get commit message
     local status=$(git status --short | sed '/^$/d')
@@ -226,8 +186,7 @@ function commit_changes_on_branch() {
     summary=$(echo "$commit_message" | head -1 | cut -d'|' -f1)
     description=$(echo "$commit_message" | cut -d'|' -f2-)
 
-    # Commit changes
-    echo "### DEBUG: Committing changes..."
+    # Commit the selected files
     if git commit -m "$summary" -m "$(echo -e "$description" | sed 's/\n/\" -m \"/g')"; then
         echo "Changes committed for branch '$branch_name'."
     else
@@ -235,11 +194,8 @@ function commit_changes_on_branch() {
         return 1
     fi
 
-    # Push changes
-    echo "### DEBUG: Pushing changes..."
-    if git push origin "$branch_name"; then
-        echo "Changes pushed to remote repository for branch '$branch_name'."
-    else
+    # Push changes to the remote repository
+    if ! git push origin "$branch_name"; then
         output_message "Error" "Error pushing changes for branch '$branch_name'."
         return 1
     fi
@@ -247,38 +203,28 @@ function commit_changes_on_branch() {
     # Stash any new changes before switching back
     stash_changes_if_needed "$branch_name"
 
-    echo "### DEBUG: Finished processing branch '$branch_name'"
     return 0
 }
-
-
-
 
 # Function to process all branches and restore the original branch
 function process_all_branches() {
     local original_branch=$(git rev-parse --abbrev-ref HEAD)
-    echo "### DEBUG: Starting branch loop from: $original_branch"
-
     local branches=$(git branch --list | sed 's/^[* ] //')
 
+    # Process each branch sequentially
     for branch in $branches; do
         commit_changes_on_branch "$branch"
     done
 
-    # Switch back to the original branch
-    echo "### DEBUG: Returning to original branch: $original_branch"
+    # Return to the original branch
     switch_to_branch "$original_branch"
 
-    # Pop stash if it existed before starting
+    # Restore original branch's stash if it exists
     pop_stash_if_exists "$original_branch"
-
-    echo "### DEBUG: All branches processed. Back on '$original_branch'."
 }
-
 
 # Main script execution
 ensure_display
 parse_arguments "$@"
 process_all_branches
 output_message "Info" "All branches have been processed."
-
