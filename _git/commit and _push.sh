@@ -141,12 +141,11 @@ function commit_changes_on_branch() {
     fi
 
     # Stage only the selected files (handling filenames with spaces correctly)
-    echo "$SELECTED_FILES"
     echo "$SELECTED_FILES" | tr '|' '\n' | while IFS= read -r file; do
         if [ -n "$file" ]; then
             git add -- "$file"
         else
-          echo "File $file does not exist"
+          echo "File '$file' does not exist"
         fi
     done
 
