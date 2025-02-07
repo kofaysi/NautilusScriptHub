@@ -13,8 +13,8 @@
 #   - If unstaged changes remain after commit, prompts for another commit.
 
 # Import common script functions if available
-if [ -f ~/.local/share/nautilus/scripts/script_utils.sh ]; then
-    source ~/.local/share/nautilus/scripts/script_utils.sh
+if [ -f "$HOME/.local/share/nautilus/scripts/script_utils.sh" ]; then
+    source "$HOME/.local/share/nautilus/scripts/script_utils.sh"
 else
     echo "Error: script_utils.sh not found. Exiting."
     exit 1
@@ -80,7 +80,8 @@ function commit_changes() {
         while IFS= read -r line; do
             status=$(echo "$line" | awk '{print $1}')  # Extract status (M, A, D, ??)
             file=$(echo "$line" | awk '{$1=""; print $0}' | sed 's/^ *//')  # Extract filename
-            file=$(echo "$file" | sed 's/^"\(.*\)"$/\1/')  # Remove surrounding quotes
+            file="${file#\"}"  # Remove leading quote
+            file="${file%\"}"  # Remove trailing quote
             FILE_LIST+=("TRUE" "$status" "$file")
         done <<< "$modified_files"
 
