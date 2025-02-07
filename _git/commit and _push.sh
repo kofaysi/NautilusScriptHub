@@ -8,13 +8,9 @@
 # - [2025-01-25]: Refactored into modular functions for better maintainability.
 #   - Import script_utils.sh for common functions.
 #   - Output error messages to GUI output as well.
-
-# Function to ensure DISPLAY is set (necessary for GUI tools like Zenity)
-function ensure_display() {
-    if [ -z "$DISPLAY" ]; then
-        export DISPLAY=:0
-    fi
-}
+# - [2025-02-07]: Ensures git pull --rebase avoids merge conflicts.
+#   - Correctly stashes/restores changes for each branch.
+# - [2025-02-08]: Remove argument parsing, none.
 
 # Import common script functions if available
 if [ -f ~/.local/share/nautilus/scripts/script_utils.sh ]; then
@@ -24,47 +20,19 @@ else
     exit 1
 fi
 
-# Function to parse script arguments
-function parse_arguments() {
-    while getopts ":m:" opt; do
-        case $opt in
-            m)
-                COMMIT_MESSAGE="$OPTARG"
-                ;;
-            \?)
-                echo "Invalid option: -$OPTARG" >&2
-                exit 1
-                ;;
-            :)
-                echo "Option -$OPTARG requires an argument." >&2
-                exit 1
-                ;;
-        esac
-    done
-}
-
 # Function to get commit message via Yad
 function get_commit_message() {
     local branch_name="$1"
     local status="$2"
-### zenity
+    ### zenity
 		zenity  --forms \
 		        --title="Commit Message" \
 		        --text="Status for branch '$branch_name':\n\n$status\n\nEnter a commit message for branch '':" \
 		        --add-entry="Summary" \
 		        --add-text-info="Description" \
 		        --width=600 --height=600
-
-### yad
-#    yad --title="Commit Message" \
-#        --form \
-#        --width=600 \
-#        --height=400 \
-#        --field="Commit Message (status prefilled.
-#Multiline message is split into multi -m messages).
-#For better commit messages visit https://www.conventionalcommits.org/":TXT "$status"
+    # For better commit messages visit https://www.conventionalcommits.org/
 }
-
 
 # Function to stash changes if there are unstaged modifications
 function stash_changes_if_needed() {
@@ -147,7 +115,11 @@ function commit_changes_on_branch() {
     while IFS= read -r line; do
         status=$(echo "$line" | awk '{print $1}')  # Extract status (e.g., M, A, D)
         file=$(echo "$line" | awk '{$1=""; print $0}' | sed 's/^ *//')  # Extract filename
-        FILE_LIST+=("TRUE" "$file" "$status")
+
+        # Remove surrounding quotes if they exist
+        file=$(echo "$file" | sed 's/^"\(.*\)"$/\1/')
+
+        FILE_LIST+=("TRUE" "$status" "$file")
     done <<< "$modified_files"
 
     # Show Zenity checklist for file selection
@@ -155,11 +127,12 @@ function commit_changes_on_branch() {
         --title="Select Files to Commit" \
         --text="Select files to stage for commit (branch '$branch_name'):" \
         --checklist \
-        --column="Select" --column="Filename" --column="Status" \
+        --column="Select" --column="Status" --column="Filename" \
         "${FILE_LIST[@]}" \
         --separator="|" \
         --width=700 --height=500 \
-        --multiple)
+        --multiple \
+        --print-column=3)
 
     # Exit if no files were selected
     if [ -z "$SELECTED_FILES" ]; then
@@ -168,10 +141,12 @@ function commit_changes_on_branch() {
     fi
 
     # Stage only the selected files (handling filenames with spaces correctly)
+    echo "$SELECTED_FILES"
     echo "$SELECTED_FILES" | tr '|' '\n' | while IFS= read -r file; do
-        clean_file=$(echo "$file" | sed 's/^"\(.*\)"$/\1/')
-        if [ -n "$clean_file" ]; then
-            git add -- "$clean_file"
+        if [ -n "$file" ]; then
+            git add -- "$file"
+        else
+          echo "File $file does not exist"
         fi
     done
 
@@ -224,7 +199,5 @@ function process_all_branches() {
 }
 
 # Main script execution
-ensure_display
-parse_arguments "$@"
 process_all_branches
 output_message "Info" "All branches have been processed."

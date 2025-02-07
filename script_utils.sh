@@ -5,6 +5,14 @@
 # Description: This script collects the common script functions. The file is imported in other Nautilus bash scripts.
 # Changelog:
 # - [2025-01-25]: Initial version
+# - [2025-02-08]: Add the DISPLAY variable specifying the graphical session. I
+
+# Function to ensure DISPLAY is set (necessary for GUI tools like Zenity)
+function ensure_display() {
+    if [ -z "$DISPLAY" ]; then
+        export DISPLAY=:0
+    fi
+}
 
 # Function to handle output
 output_message() {
@@ -81,3 +89,5 @@ rename_item() {
     mv "$old_name" "$new_name"
     echo "Renamed: $old_name -> $new_name"
 }
+
+ensure_display
