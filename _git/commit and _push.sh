@@ -7,10 +7,13 @@
 # - [2025-01-25]: Refactored into modular functions for better maintainability.
 #   - Import script_utils.sh for common functions.
 #   - Output error messages to GUI output as well.
-# - [2025-02-08]: Simplified to work only on the active branch.
+# - [2025-02-07]: Simplified to work only on the active branch.
 #   - Includes untracked files in the commit process.
 #   - Ensures staged changes are committed before unstaged changes.
 #   - If unstaged changes remain after commit, prompts for another commit.
+# - [2025-02-08]: Simplified dialog box. Removed summary field and kept only the description field.
+#   - Added git reset on commit abort
+#   - AI-generated commit message suggestion.
 
 # Import common script functions if available
 if [ -f "$HOME/.local/share/nautilus/scripts/script_utils.sh" ]; then
@@ -23,16 +26,27 @@ fi
 # Get the name of the current branch
 BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 
+# Function to generate and display AI commit suggestion separately
+function show_ai_commit_suggestion() {
+    local ai_suggestion=$(ai-commit --PROVIDER=ollama --MODEL=mistral --message-only | awk '/^------------------------------$/{flag=!flag; next} flag')
+    zenity --entry \
+        --title="AI Commit Suggestion" \
+        --text="Copy this suggestion if needed and paste it into your commit message:" \
+        --entry-text="$ai_suggestion"
+}
+
 # Function to get commit message via Zenity
 function get_commit_message() {
     local status="$1"
-    zenity --forms \
+    show_ai_commit_suggestion  # Show AI commit suggestion first
+
+    zenity --text-info \
         --title="Commit Message" \
         --text="Status for branch '$BRANCH_NAME':\n\n$status\n\nEnter a commit message:" \
-        --add-entry="Summary" \
-        --add-text-info="Description" \
+        --editable \
         --width=600 --height=600
 }
+
 
 # Function to stash changes before pulling updates
 function stash_changes_if_needed() {
@@ -113,15 +127,13 @@ function commit_changes() {
         # Get commit message
         commit_message=$(get_commit_message "$modified_files")
         if [ -z "$commit_message" ]; then
+            git reset
             output_message "Error" "Commit aborted: No commit message provided."
             return 1
         fi
 
-        summary=$(echo "$commit_message" | head -1 | cut -d'|' -f1)
-        description=$(echo "$commit_message" | cut -d'|' -f2-)
-
         # Commit changes
-        if git commit -m "$summary" -m "$(echo -e "$description" | sed 's/\n/\" -m \"/g')"; then
+        if git commit -m "$commit_message"; then
             echo "Changes committed for branch '$BRANCH_NAME'."
         else
             output_message "Error" "No changes to commit after staging."
