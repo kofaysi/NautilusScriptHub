@@ -29,10 +29,10 @@ BRANCH_NAME=$(git rev-parse --abbrev-ref HEAD)
 # Function to generate and display AI commit suggestion separately
 function show_ai_commit_suggestion() {
     local ai_suggestion=$(ai-commit --PROVIDER=ollama --MODEL=mistral --message-only | awk '/^------------------------------$/{flag=!flag; next} flag')
-    zenity --entry \
+    zenity --info \
         --title="AI Commit Suggestion" \
-        --text="Copy this suggestion if needed and paste it into your commit message:" \
-        --entry-text="$ai_suggestion"
+        --text="$ai_suggestion" \
+        --no-wrap
 }
 
 # Function to get commit message via Zenity
