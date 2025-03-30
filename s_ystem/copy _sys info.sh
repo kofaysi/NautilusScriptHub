@@ -15,7 +15,7 @@ then
 fi
 
 # Fetch system information using inxi and copy it to the clipboard
-inxi -b | xclip -selection clipboard
+inxi --tty -b | xclip -selection clipboard
 
 # Notification to the user
 notify-send "Success" "System information copied to clipboard."

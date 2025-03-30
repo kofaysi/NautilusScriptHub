@@ -15,7 +15,7 @@ then
 fi
 
 # Fetch CPU and memory usage information and copy to the clipboard
-top -b -n 1 | head -5 | xclip -selection clipboard
+top --tty -b -n 1 | head -5 | xclip -selection clipboard
 
 # Notification to the user
 notify-send "Success" "CPU and memory usage information copied to clipboard."
