@@ -18,6 +18,7 @@ for file in "$@"; do
     mv "$file" "$original_file_name"
     
     # Use Ghostscript to resize the PDF
+    # dPDFSETTINGS: ebook / screen / printer / prepress
     gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile="$file" -f "$original_file_name"
 done
 
